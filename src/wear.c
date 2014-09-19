@@ -178,6 +178,7 @@ void reset_card(int card_number) {
 
 // Load a card as [card_no % CACHESIZE] (scroll cycle)
 void load_new_card(int card_no, bool above) {
+  	APP_LOG(APP_LOG_LEVEL_DEBUG, ".load_new_card");
 	if (above) {
 		//reinsert background (for layering)
 		//layer_remove_from_parent(back[card_no % CACHESIZE]);
@@ -199,6 +200,7 @@ void load_new_card(int card_no, bool above) {
 }
 
 void load_fake_cards() {
+  APP_LOG(APP_LOG_LEVEL_DEBUG, ".load_fake_cards");
 	count = 3;
 	for (int i = 0; i < CACHESIZE; i++) {
 		load_new_card(i, false);
@@ -206,6 +208,7 @@ void load_fake_cards() {
 }
 
 void animate(bool up) {
+  APP_LOG(APP_LOG_LEVEL_DEBUG, ".animate");
 	GRect from_frame;
 	GRect to_frame;
 
@@ -298,6 +301,7 @@ void animate(bool up) {
 }
 
 void up_single_click_handler(ClickRecognizerRef recognizer, void *context) {
+  APP_LOG(APP_LOG_LEVEL_DEBUG, ".up_single_click_handler");
 	if (current > -1) {
 		animate(true);
 		current--;
@@ -307,6 +311,7 @@ void up_single_click_handler(ClickRecognizerRef recognizer, void *context) {
 }
 
 void down_single_click_handler(ClickRecognizerRef recognizer, void *context) {
+  APP_LOG(APP_LOG_LEVEL_DEBUG, ".down_single_click_handler");
 	if (current < count) {
 		animate(false);
 		current++;
@@ -316,6 +321,7 @@ void down_single_click_handler(ClickRecognizerRef recognizer, void *context) {
 }
 
 void back_single_click_handler(ClickRecognizerRef recognizer, void *context) {
+  APP_LOG(APP_LOG_LEVEL_DEBUG, ".back_single_click_handler");
 	DictionaryIterator *iter;
  	app_message_outbox_begin(&iter);
 	Tuplet value = TupletInteger(1, 1);
@@ -326,6 +332,7 @@ void back_single_click_handler(ClickRecognizerRef recognizer, void *context) {
 }
 
 void select_single_click_handler(ClickRecognizerRef recognizer, void *context) {
+  APP_LOG(APP_LOG_LEVEL_DEBUG, ".select_single_click_handler");
 	Window* actionWindow = window_create();
 	window_stack_push(actionWindow, true);
 	actions_layer = text_layer_create(GRect(0,0,144,168));
@@ -349,7 +356,9 @@ void config_provider(Window *window) {
 	//window_single_click_subscribe(BUTTON_ID_SELECT, select_single_click_handler);
 }
 
+// Handle input from the phone service.
 void in_received_handler(DictionaryIterator *iter, void *context) {
+  APP_LOG(APP_LOG_LEVEL_DEBUG, ".in_received_handler() Handle input from the phone service");
 	//vibes_short_pulse();
 	Tuple *tuple_pointer = dict_find(iter,ID);
 	int id = tuple_pointer->value->int32;
@@ -357,8 +366,10 @@ void in_received_handler(DictionaryIterator *iter, void *context) {
 	tuple_pointer = dict_find(iter, COMMAND);
 	if (tuple_pointer) {
 		if (tuple_pointer->value->int8 == CLEAR) {
-				reset_card(id);
+      APP_LOG(APP_LOG_LEVEL_DEBUG, ".in_received_handler() CLEAR");
+			reset_card(id);
 		} else if (tuple_pointer->value->int8 == UPDATETEXT) {
+      APP_LOG(APP_LOG_LEVEL_DEBUG, ".in_received_handler() UPDATETEXT");
 			tuple_pointer = NULL;
 			tuple_pointer = dict_find(iter, BYTES);
 			if (tuple_pointer) {				
@@ -377,14 +388,13 @@ void in_received_handler(DictionaryIterator *iter, void *context) {
 				
 				layer_mark_dirty(card[id]);
 			}
-		}
-		else if(tuple_pointer->value->int8 == UPDATEICON) {
+		} else if(tuple_pointer->value->int8 == UPDATEICON) {
+      APP_LOG(APP_LOG_LEVEL_DEBUG, ".in_received_handler() UPDATEICON");
 			tuple_pointer = NULL;
 			tuple_pointer = dict_find(iter, BYTES);
 			if (tuple_pointer)  {
 				uint8_t* byteArray = tuple_pointer->value->data;
-				
-				
+
 				Tuple *tuple_row = dict_find(iter, LINE);
 				int row = tuple_row->value->int32;
 
@@ -395,8 +405,8 @@ void in_received_handler(DictionaryIterator *iter, void *context) {
 				}
 				layer_mark_dirty(card[id]);
 			}
-		}
-		else if(tuple_pointer->value->int8 == UPDATEIMAGE) {
+		} else if(tuple_pointer->value->int8 == UPDATEIMAGE) {
+      APP_LOG(APP_LOG_LEVEL_DEBUG, ".in_received_handler() UPDATEIMAGE");
 			tuple_pointer = NULL;
 			tuple_pointer = dict_find(iter, BYTES);
 			if (tuple_pointer) {
@@ -411,6 +421,7 @@ void in_received_handler(DictionaryIterator *iter, void *context) {
 				layer_mark_dirty(back[id]);
 			}
 		} else if(tuple_pointer->value->int8 == ACTIONS) {
+      APP_LOG(APP_LOG_LEVEL_DEBUG, ".in_received_handler() ACTIONS");
 			tuple_pointer = NULL;
 			tuple_pointer = dict_find(iter, BYTES);
 			if (tuple_pointer) {				
@@ -425,13 +436,16 @@ void in_received_handler(DictionaryIterator *iter, void *context) {
 }
 
 void out_sent_handler(DictionaryIterator *sent, void *context) {
-   // Outgoing message was delivered
- }
+  APP_LOG(APP_LOG_LEVEL_DEBUG, ".out_sent_handler()");
+  // Outgoing message was delivered
+}
 void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context) {
-   // Outgoing message failed
- }
+  APP_LOG(APP_LOG_LEVEL_DEBUG, ".out_failed_handler()");
+  // Outgoing message failed
+}
 void in_dropped_handler(AppMessageResult reason, void *context) {
-   // Incoming message dropped
+  APP_LOG(APP_LOG_LEVEL_DEBUG, ".in_dropped_handler()");
+  // Incoming message dropped
 }
 
 void tick(struct tm *tick_time, TimeUnits units_changed) {
@@ -455,7 +469,7 @@ void init() {
 	layer_set_update_proc(watchface, draw_watchface);
 	
 	// Layers and bitmaps
-	for(int i=0; i<CACHESIZE; i++) {
+	for (int i=0; i<CACHESIZE; i++) {
 		card_anim[i] = NULL;
 		back_anim[i] = NULL;
 		
@@ -473,7 +487,7 @@ void init() {
 		
 		// Set cards blank (loading)
 		reset_card(i);
-	}
+  }
 	
 	layer_add_child(window_layer, watchface);
 	
