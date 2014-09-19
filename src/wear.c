@@ -1,6 +1,6 @@
-	/*
- * Pebble Wear
- * Richard Gilbert
+/*
+ * Created by mbrady on 9/19/14.
+ * Inspired by PebbleWear, created by RichardGG.
  */
 
 #include "pebble.h"
@@ -16,44 +16,46 @@
 
 static Window* window;
 
-//layers
+//Layers
 static Layer* card[CACHESIZE];
 static Layer* back[CACHESIZE];
 static Layer* watchface;
 static TextLayer* actions_layer;
 
-//animation
+// Animation
 static PropertyAnimation* card_anim[CACHESIZE];
 static PropertyAnimation* back_anim[CACHESIZE];
 //static PropertyAnimation* watchface_anim;
 
-//bitmap structures
+// Bitmap structures
 static GBitmap card_icon[CACHESIZE];
 static GBitmap back_image[CACHESIZE];
 
-//image data
+// Image data
 static uint8_t icon_data[ICONSIZE * CACHESIZE];
 static uint8_t image_data[IMAGESIZE * CACHESIZE];
 
-//strings
+// Strings
 static char content_title[TITLESIZE * CACHESIZE];
 static char content_text[TEXTSIZE * CACHESIZE];
 static char currenttime[10];
 static char actions[20 * 3];
 
-//counters
-static int current = -1;//WATCHFACE
+// Counters
+static int current = -1; //WATCHFACE
 static int count = 0;
 
-enum { //DICTIONARY KEYS
-	 COMMAND,
-	 BYTES,
-	 LINE,
-	 ID
-     };
+// Dictionary keys
+enum {
+  COMMAND,
+	BYTES,
+	LINE,
+	ID
+  };
 
-enum { //command types
-	CLEAR,
+// Command types
+enum {
+  CLEAR,
 	UPDATETEXT,
 	UPDATEICON,
 	UPDATEIMAGE,
@@ -63,50 +65,49 @@ enum { //command types
 	ACTIONS
 	};
 
-
 //BACKGROUND DRAWING
 static void draw_back(Layer *back, GContext* ctx, int backNo) {
 	GRect bounds = ((GBitmap*)&back_image[backNo])->bounds;
 	graphics_draw_bitmap_in_rect(ctx, &back_image[backNo], (GRect) { .origin = { 0, 0 }, .size = bounds.size });
 }
 
-//CARD DRAWING
-static void draw_card(Layer *card, GContext* ctx, int cardNo){
+// CARD DRAWING
+static void draw_card(Layer *card, GContext* ctx, int cardNo) {
 	
-	//get title content size
+	// Get title content size
 	GSize title_size = graphics_text_layout_get_content_size(&content_title[cardNo * TITLESIZE], 
 															 fonts_get_system_font(FONT_KEY_GOTHIC_18), 
 															 GRect(0,0,142-54,168), 
 															 GTextOverflowModeWordWrap, GTextAlignmentLeft);
-	//get text content size
+	// Get text content size
 	GSize text_size = graphics_text_layout_get_content_size(&content_text[cardNo * TEXTSIZE], 
 															fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), 
 															GRect(0,0,142,168), 
 															GTextOverflowModeWordWrap, GTextAlignmentLeft);
-	//total card height
+	// Total card height
 	int card_height = title_size.h + text_size.h;	
 	
-	//card
+	// Card
 	graphics_context_set_fill_color(ctx, GColorWhite );
 	graphics_fill_rect(ctx, GRect(0, 168-card_height, 144, card_height), 0, GCornerNone);
 	
-	//box
+	// Box
 	graphics_context_set_fill_color(ctx, GColorBlack);
 	graphics_fill_rect(ctx, GRect(144-54, 168-card_height-26, 52, 52), 3, GCornersAll);
 	
-	//icon
+	// Icon
 	//GRect bounds = card_icon[cardNo]->bounds;
 	//graphics_draw_bitmap_in_rect(ctx, card_icon[cardNo], (GRect) { .origin = { 144-52, height-card_height-24 }, .size = bounds.size });
 	
 	graphics_context_set_text_color(ctx, GColorBlack);	
 	
-	//draw title content
+	// Draw title content
 	graphics_draw_text(ctx, 
 					   &content_title[cardNo * TITLESIZE],  
 					   fonts_get_system_font(FONT_KEY_GOTHIC_18),
 					   GRect( 2, 168-card_height, 142-54, title_size.h ),
 					   GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
-	//draw text content
+	// Draw text content
 	graphics_draw_text(ctx, 
 					   &content_text[cardNo * TEXTSIZE],  
 					   fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD), 
@@ -128,67 +129,63 @@ static void draw_watchface(Layer *me, GContext* ctx){
 					   GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
 }
 
-
-
 //INDIVIDUAL CARD FUNCTIONS
-static void card_update_0(Layer *me, GContext* ctx) {	draw_card(me, ctx, 0);	}
-static void card_update_1(Layer *me, GContext* ctx) {	draw_card(me, ctx, 1);	}
-static void card_update_2(Layer *me, GContext* ctx) {	draw_card(me, ctx, 2);	}
-static void card_update_3(Layer *me, GContext* ctx) {	draw_card(me, ctx, 3);	}
-static void card_update_4(Layer *me, GContext* ctx) {	draw_card(me, ctx, 4);	}
+static void card_update_0(Layer *me, GContext* ctx) {	draw_card(me, ctx, 0); }
+static void card_update_1(Layer *me, GContext* ctx) {	draw_card(me, ctx, 1); }
+static void card_update_2(Layer *me, GContext* ctx) {	draw_card(me, ctx, 2); }
+static void card_update_3(Layer *me, GContext* ctx) {	draw_card(me, ctx, 3); }
+static void card_update_4(Layer *me, GContext* ctx) {	draw_card(me, ctx, 4); }
 
-static void back_update_0(Layer *me, GContext* ctx) {	draw_back(me, ctx, 0);	}
-static void back_update_1(Layer *me, GContext* ctx) {	draw_back(me, ctx, 1);	}
-static void back_update_2(Layer *me, GContext* ctx) {	draw_back(me, ctx, 2);	}
-static void back_update_3(Layer *me, GContext* ctx) {	draw_back(me, ctx, 3);	}
-static void back_update_4(Layer *me, GContext* ctx) {	draw_back(me, ctx, 4);	}
+static void back_update_0(Layer *me, GContext* ctx) {	draw_back(me, ctx, 0); }
+static void back_update_1(Layer *me, GContext* ctx) {	draw_back(me, ctx, 1); }
+static void back_update_2(Layer *me, GContext* ctx) {	draw_back(me, ctx, 2); }
+static void back_update_3(Layer *me, GContext* ctx) {	draw_back(me, ctx, 3); }
+static void back_update_4(Layer *me, GContext* ctx) {	draw_back(me, ctx, 4); }
 
 static void (*card_update[CACHESIZE]) (Layer *me, GContext* ctx) = {card_update_0,card_update_1,card_update_2,card_update_3,card_update_4};
 static void (*back_update[CACHESIZE]) (Layer *me, GContext* ctx) = {back_update_0,back_update_1,back_update_2,back_update_3,back_update_4};
 
 
 //IMAGE DATA RESET
-void blank_image_data(int image_number){
+void blank_image_data(int image_number) {
 	//for each row
-	for(int row = 0; row < 168; row++){
+	for (int row = 0; row < 168; row++) {
 		//for each byte
-		for(int col = 0; col < ROWSIZE; col++){
+		for (int col = 0; col < ROWSIZE; col++) {
 			//pointer to current byte, easier than typing out this string every time
 			uint8_t* current_byte = &image_data[(image_number * IMAGESIZE) + (row * ROWSIZE) + col]; 
 			*current_byte = 0;
 			
-			//for each bit
-			for(int bit = 0; bit < 8; bit++){					
+			// For each bit
+			for (int bit = 0; bit < 8; bit++) {					
 				*current_byte += ((row % 2) + (col * 8 + bit)) % 2; //add 1 or 0 (in checkerboard pattern)
 
-				//if not last bit
-				if(bit != 7)
-					*current_byte <<= 1;//shift bits
+				// If not last bit
+				if (bit != 7) {
+          *current_byte <<= 1;//shift bits
+        }
 			}
 		}
 	}
 }
 
 //CARD DATA RESET
-void reset_card(int card_number)
-{
+void reset_card(int card_number) {
 	blank_image_data(card_number);
-	
 	strcpy(&content_title[card_number * TITLESIZE], "Loading");	
 	strcpy(&content_text[card_number * TEXTSIZE], "");	
 }
 
-//load a card as [card_no % CACHESIZE] (scroll cycle)
-void load_new_card(int card_no, bool above){
-	if(above){
+// Load a card as [card_no % CACHESIZE] (scroll cycle)
+void load_new_card(int card_no, bool above) {
+	if (above) {
 		//reinsert background (for layering)
 		//layer_remove_from_parent(back[card_no % CACHESIZE]);
 		//layer_insert_below_sibling(back[card_no % CACHESIZE], back[((card_no+1)%CACHESIZE)]);
 		
 		layer_set_frame(card[card_no % CACHESIZE], GRect(0,-168,144,168));
 		layer_set_frame(back[card_no % CACHESIZE], GRect(0, -84, 144, 168));
-		
-	}else{
+	} else {
 		//reinsert background (for layering)
 		//layer_remove_from_parent(back[card_no % CACHESIZE]);
 		//if(card_no == 0)
@@ -201,100 +198,98 @@ void load_new_card(int card_no, bool above){
 	}
 }
 
-void load_fake_cards(){
+void load_fake_cards() {
 	count = 3;
-	for(int i = 0; i < CACHESIZE; i++){
+	for (int i = 0; i < CACHESIZE; i++) {
 		load_new_card(i, false);
 	}
 }
 
-void animate(bool up)
-{
+void animate(bool up) {
 	GRect from_frame;
 	GRect to_frame;
-	
+
 	int new = current+1;
-	if(up)
+	if(up) {
 		new = current-1;
-	
-	//cleanup/memory management (things are not destroyed automatically)
+  }
+
+	// Cleanup/memory management (things are not destroyed automatically)
 	animation_unschedule((Animation*)back_anim[current%CACHESIZE]);
 	animation_unschedule((Animation*)card_anim[current%CACHESIZE]);
-	if(new!=-1){
-	animation_unschedule((Animation*)back_anim[new%CACHESIZE]);
-	animation_unschedule((Animation*)card_anim[new%CACHESIZE]);
+	if (new!=-1) {
+	  animation_unschedule((Animation*)back_anim[new%CACHESIZE]);
+	  animation_unschedule((Animation*)card_anim[new%CACHESIZE]);
 	}
-	if(current != -1){
-		if(back_anim[current%CACHESIZE] != NULL)
-			property_animation_destroy(back_anim[current%CACHESIZE]);
-		if(card_anim[current%CACHESIZE] != NULL)
-			property_animation_destroy(card_anim[current%CACHESIZE]);
+	if (current != -1) {
+	  if (back_anim[current%CACHESIZE] != NULL) {
+      property_animation_destroy(back_anim[current%CACHESIZE]);
+    }
+		if (card_anim[current%CACHESIZE] != NULL) {
+      property_animation_destroy(card_anim[current%CACHESIZE]);
+    }
 	}
-	if(new!=-1){
-	if(back_anim[new%CACHESIZE] != NULL)
-		property_animation_destroy(back_anim[new%CACHESIZE]);
-	if(card_anim[new%CACHESIZE] != NULL)
-		property_animation_destroy(card_anim[new%CACHESIZE]);
+	if (new!=-1) {
+	  if (back_anim[new%CACHESIZE] != NULL) {
+      property_animation_destroy(back_anim[new%CACHESIZE]);
+    }
+	  if (card_anim[new%CACHESIZE] != NULL) {
+      property_animation_destroy(card_anim[new%CACHESIZE]);
+    }
 	}
-	
-	
+
 	//layer_remove_from_parent(back[card_no % CACHESIZE]);
 	//layer_insert_below_sibling(back[card_no % CACHESIZE], back[((card_no+1)%CACHESIZE)]);
-	
-	
-	if(current!=-1){
+
+	if (current!=-1) {
 		//move current background
 		from_frame = layer_get_frame(back[current%CACHESIZE]); //grab the current position
-		if(!up)
+		if (!up) {
 			to_frame = GRect(0, -124, 144, 0);
-		else
+    } else {
 			to_frame = GRect(0,144,144,168);
+    }
 
 		back_anim[current%CACHESIZE] = property_animation_create_layer_frame(back[current%CACHESIZE], &from_frame, &to_frame);
 		animation_set_curve((Animation*) back_anim[current%CACHESIZE], AnimationCurveLinear);
 		animation_set_duration((Animation*) back_anim[current%CACHESIZE],300);
 		animation_schedule((Animation*) back_anim[current%CACHESIZE]);
 
-
-		//move current card
+		// Move current card
 		from_frame = layer_get_frame(card[current%CACHESIZE]); //grab the current position
-		if(!up)
-			to_frame = GRect(0, -168, 144, 168);
-		else
-			to_frame = GRect(0,168,144,168);
+		if (!up) {
+      to_frame = GRect(0, -168, 144, 168);
+    } else {
+      to_frame = GRect(0,168,144,168);
+    }
 
 		card_anim[current%CACHESIZE] = property_animation_create_layer_frame(card[current%CACHESIZE], &from_frame, &to_frame);
 		animation_set_curve((Animation*) card_anim[current%CACHESIZE], AnimationCurveLinear);
 		animation_set_duration((Animation*) card_anim[current%CACHESIZE],300);
 		animation_schedule((Animation*) card_anim[current%CACHESIZE]);
-		
-	}else{
+	} else {
 		//from_frame = layer_get_frame(watchface);
 		//to_frame = GRect(0,-168,144,168);
 		//watchface_anim = property_animation_create_layer_frame(watchface, &from_frame, &to_frame);
 		//animation_schedule((Animation*) watchface_anim);
 	}
 	
-	if(!(current==0 && up))
-	{
+	if (!(current==0 && up)) {
 		//move new background
 		from_frame = layer_get_frame(back[new%CACHESIZE]); //grab the current position
 		to_frame = GRect(0 ,0 ,144, 168);
-
 		back_anim[new%CACHESIZE] = property_animation_create_layer_frame(back[new%CACHESIZE], &from_frame, &to_frame);
 		animation_set_curve((Animation*) back_anim[new%CACHESIZE], AnimationCurveEaseOut);
 		animation_set_duration((Animation*) back_anim[new%CACHESIZE],300);
 		animation_schedule((Animation*) back_anim[new%CACHESIZE]);
 
-
 		//move new card
 		from_frame = layer_get_frame(card[new%CACHESIZE]); //grab the current position
-
 		card_anim[new%CACHESIZE] = property_animation_create_layer_frame(card[new%CACHESIZE], &from_frame, &to_frame);
 		animation_set_curve((Animation*) card_anim[new%CACHESIZE], AnimationCurveEaseOut);
 		animation_set_duration((Animation*) card_anim[new%CACHESIZE],300);
 		animation_schedule((Animation*) card_anim[new%CACHESIZE]);
-	}else{
+	} else {
 		//from_frame = layer_get_frame(watchface);
 		//to_frame = GRect(0,-168,144,168);
 		//watchface_anim = property_animation_create_layer_frame(watchface, &from_frame, &to_frame);
@@ -303,7 +298,7 @@ void animate(bool up)
 }
 
 void up_single_click_handler(ClickRecognizerRef recognizer, void *context) {
-	if(current > -1){
+	if (current > -1) {
 		animate(true);
 		current--;
 		//if(current > CACHESIZE / 2 + 1)
@@ -312,7 +307,7 @@ void up_single_click_handler(ClickRecognizerRef recognizer, void *context) {
 }
 
 void down_single_click_handler(ClickRecognizerRef recognizer, void *context) {
-	if(current < count){
+	if (current < count) {
 		animate(false);
 		current++;
 		//if( current > CACHESIZE / 2)
@@ -354,30 +349,19 @@ void config_provider(Window *window) {
 	//window_single_click_subscribe(BUTTON_ID_SELECT, select_single_click_handler);
 }
 
-
 void in_received_handler(DictionaryIterator *iter, void *context) {
-
 	//vibes_short_pulse();
-	
-	
 	Tuple *tuple_pointer = dict_find(iter,ID);
 	int id = tuple_pointer->value->int32;
-	
 	tuple_pointer = NULL;
-	
 	tuple_pointer = dict_find(iter, COMMAND);
-	if(tuple_pointer)
-	{
-		if(tuple_pointer->value->int8 == CLEAR)
-		{
+	if (tuple_pointer) {
+		if (tuple_pointer->value->int8 == CLEAR) {
 				reset_card(id);
-		}
-		else if(tuple_pointer->value->int8 == UPDATETEXT)
-		{
+		} else if (tuple_pointer->value->int8 == UPDATETEXT) {
 			tuple_pointer = NULL;
 			tuple_pointer = dict_find(iter, BYTES);
-			if(tuple_pointer)
-			{				
+			if (tuple_pointer) {				
 				uint8_t* bytes = tuple_pointer->value->data;
 				
 				char string[21];
@@ -393,15 +377,11 @@ void in_received_handler(DictionaryIterator *iter, void *context) {
 				
 				layer_mark_dirty(card[id]);
 			}
-			
-		
 		}
-		else if(tuple_pointer->value->int8 == UPDATEICON)
-		{
+		else if(tuple_pointer->value->int8 == UPDATEICON) {
 			tuple_pointer = NULL;
 			tuple_pointer = dict_find(iter, BYTES);
-			if (tuple_pointer) 
-			{
+			if (tuple_pointer)  {
 				uint8_t* byteArray = tuple_pointer->value->data;
 				
 				
@@ -410,40 +390,32 @@ void in_received_handler(DictionaryIterator *iter, void *context) {
 
 				//icon_data[0] = 0;
 				//icon_data[0] = byteArray[0];
-				for(int i =0; i < 6; i++)
-				{
+				for(int i =0; i < 6; i++) {
 					//icon_data[i + (64/8)*row] = byteArray[i];
 				}
 				layer_mark_dirty(card[id]);
 			}
 		}
-		else if(tuple_pointer->value->int8 == UPDATEIMAGE)
-		{
+		else if(tuple_pointer->value->int8 == UPDATEIMAGE) {
 			tuple_pointer = NULL;
 			tuple_pointer = dict_find(iter, BYTES);
-			if (tuple_pointer) 
-			{
+			if (tuple_pointer) {
 				uint8_t* byteArray = tuple_pointer->value->data;
 				
 				Tuple *tuple_row = dict_find(iter, LINE);
 				int row = tuple_row->value->int32;
 
-				for(int i =0; i < 18; i++)
-				{
+				for(int i =0; i < 18; i++) {
 					image_data[i + (160/8)*row + id*IMAGESIZE] = byteArray[i];
 				}
 				layer_mark_dirty(back[id]);
 			}
-		}
-		else if(tuple_pointer->value->int8 == ACTIONS)
-		{
+		} else if(tuple_pointer->value->int8 == ACTIONS) {
 			tuple_pointer = NULL;
 			tuple_pointer = dict_find(iter, BYTES);
-			if(tuple_pointer)
-			{				
+			if (tuple_pointer) {				
 				uint8_t* bytes = tuple_pointer->value->data;
-				
-				for(int i=0;i<30;i++){
+				for(int i=0;i<30;i++) {
 					actions[i] = bytes[i];
 				}
 				text_layer_set_text(actions_layer, actions);
@@ -452,27 +424,22 @@ void in_received_handler(DictionaryIterator *iter, void *context) {
 	}
 }
 
+void out_sent_handler(DictionaryIterator *sent, void *context) {
+   // Outgoing message was delivered
+ }
+void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context) {
+   // Outgoing message failed
+ }
+void in_dropped_handler(AppMessageResult reason, void *context) {
+   // Incoming message dropped
+}
 
- void out_sent_handler(DictionaryIterator *sent, void *context) {
-   // outgoing message was delivered
- }
- void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context) {
-   // outgoing message failed
- }
- void in_dropped_handler(AppMessageResult reason, void *context) {
-   // incoming message dropped
- }
-
-void tick(struct tm *tick_time, TimeUnits units_changed)
-{
+void tick(struct tm *tick_time, TimeUnits units_changed) {
 	layer_mark_dirty(watchface);
 }
 
-
-//INIT
-void init(){
-	
-	//window
+void init() {
+	// Window
 	window = window_create();
 	window_set_fullscreen(window, true);
 	window_stack_push(window, true);
@@ -480,21 +447,19 @@ void init(){
 	Layer* window_layer = window_get_root_layer(window);
 	GRect bounds = layer_get_frame(window_layer);
 	
-	//buttons
+	// Buttons
 	window_set_click_config_provider(window, (ClickConfigProvider) config_provider);
 	tick_timer_service_subscribe(MINUTE_UNIT, (TickHandler) tick);
 	
 	watchface = layer_create(bounds);
 	layer_set_update_proc(watchface, draw_watchface);
 	
-	
-	//layers and bitmaps
-	for(int i=0; i<CACHESIZE; i++){
-		
+	// Layers and bitmaps
+	for(int i=0; i<CACHESIZE; i++) {
 		card_anim[i] = NULL;
 		back_anim[i] = NULL;
 		
-		//create layers
+		// Create layers
 		card[i] = layer_create(bounds);
 		layer_set_update_proc(card[i], card_update[i]);
 		//layer_add_child(window_layer, card[i]);
@@ -503,38 +468,31 @@ void init(){
 		layer_set_update_proc(back[i], back_update[i]);
 		//layer_add_child(window_layer, back[i]);
 		
-		//point to image data
+		// Point to image data
 		back_image[i] = (GBitmap){.addr = &image_data[i * IMAGESIZE], .bounds = GRect(0,0,144,168), .row_size_bytes = ROWSIZE};
 		
-		//set cards blank (loading)
+		// Set cards blank (loading)
 		reset_card(i);
-		
 	}
 	
 	layer_add_child(window_layer, watchface);
 	
-	for(int i=0; i<CACHESIZE; i++)
-	{
+	for (int i = 0; i < CACHESIZE; i++) {
 		layer_add_child(window_layer, back[i]);
 	}
-	
-	
-	
-	for(int i = 0; i < CACHESIZE; i++)
-		{
+	for (int i = 0; i < CACHESIZE; i++) {
 		layer_add_child(window_layer, card[i]);
 	}
 	
 	load_fake_cards();
 	
-	
-	//register handlers
+	// Register handlers
 	app_message_register_inbox_received(in_received_handler);
 	app_message_register_inbox_dropped(in_dropped_handler);
 	app_message_register_outbox_sent(out_sent_handler);
 	app_message_register_outbox_failed(out_failed_handler);
 
-	//set size
+	// Set size
 	const uint32_t inbound_size = 512;
 	const uint32_t outbound_size = 64;
 	app_message_open(inbound_size, outbound_size);
@@ -546,33 +504,27 @@ void init(){
 	Tuplet value = TupletInteger(1, 0);
 	dict_write_tuplet(iter, &value);
 	app_message_outbox_send();
-	
 }
 
-//DEINIT
 void deinit(){
-	
 	animation_unschedule_all();
-	
-	//deinit layers
-	for(int i=0; i<CACHESIZE; i++){
-		if(card_anim[i] != NULL)
-		property_animation_destroy(card_anim[i]);
-		if(back_anim[i] != NULL)
-		property_animation_destroy(back_anim[i]);
-		
-		layer_destroy(card[i]);
+
+	// Deinit all layers
+	for (int i=0; i<CACHESIZE; i++){
+		if (card_anim[i] != NULL) {
+		  property_animation_destroy(card_anim[i]);
+    }
+		if (back_anim[i] != NULL) {
+      property_animation_destroy(back_anim[i]);
+    }
+
+    layer_destroy(card[i]);
 		layer_destroy(back[i]);
-		
-		
 	}
-	
-	layer_destroy(watchface);
+  layer_destroy(watchface);
 	window_destroy(window);
-	
 }
 
-//MAIN
 int main(void) {
 	init();
 	app_event_loop();
