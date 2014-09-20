@@ -1,5 +1,5 @@
 #include <pebble.h>
-#include <screen2.c>
+//#include <screen2.c>
 
 static Window *screen1_window;
 static TextLayer *screen1_text_layer;
@@ -11,7 +11,7 @@ static void logsomething() {
 static void screen1_selectClickHandler(ClickRecognizerRef recognizer, void *context) {
   text_layer_set_text(screen1_text_layer, "Select");
   logsomething();
-  window_stack_push(screen2_getWindow(), true);
+  //window_stack_push(screen2_getWindow(), true);
 }
 
 static void screen1_upClickHandler(ClickRecognizerRef recognizer, void *context) {
