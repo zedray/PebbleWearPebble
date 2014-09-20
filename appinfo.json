@@ -3,21 +3,14 @@
     "capabilities": [
         ""
     ],
-    "companyName": "Mark Brady",
-    "longName": "PebbleWear",
+    "companyName": "zedray@hotmail.com",
+    "longName": "PebbleWear4",
     "projectType": "native",
     "resources": {
-        "media": [
-            {
-                "file": "images/android.png",
-                "menuIcon": true,
-                "name": "IMAGE_APP_ICON",
-                "type": "png"
-            }
-        ]
+        "media": []
     },
-    "shortName": "Wear",
-    "uuid": "69fbcd85-91ae-4fbf-8d71-a6321dca8b28",
+    "shortName": "PebbleWear4",
+    "uuid": "7a6efee0-ab2b-4698-a093-00ac2ccd7b70",
     "versionCode": 1,
     "versionLabel": "1.0",
     "watchapp": {
